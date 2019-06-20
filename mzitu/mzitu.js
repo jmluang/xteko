@@ -3,14 +3,15 @@
   mzitu X JSBox
   声明:
   1. 脚本含成人内容，未满十八岁禁止运行
-  2. 脚本所有内容来自 https://www.avgle.com 与脚本作者无任何关系
+  2. 脚本所有内容来自 https://www.mzitu.com 与脚本作者无任何关系
   3. 脚本制作纯属技术交流，无任何商业利益或传播淫秽目的
   By orqzsf1
   @contact https://t.me/wlpwwwww
 */
 
-const version = 0.1;
-$addin.current.version=version
+const version = "0.1.1";
+// $addin.current.version=version;
+
 //检测扩展更新
 function scriptVersionUpdate() {
   $http.get({
@@ -61,8 +62,9 @@ function scriptVersionUpdate() {
   });
 }
 
-
-const hot_url = "http://adr.meizitu.net/wp-json/wp/v2/hot";
+// const hot_url = "http://adr.meizitu.net/wp-json/wp/v2/hot";
+const host = "https://www.mzitu.com";
+const hot_url = host + "/hot";
 const post_url = "http://adr.meizitu.net/wp-json/wp/v2/posts?per_page=40";
 
 function fetch(url) {
@@ -72,8 +74,22 @@ function fetch(url) {
     url: url,
     handler: function(resp) {
       if (resp.data.length > 0) {
-        // $ui.toast("载入成功", 1)
-        render(resp.data);
+        const reg = new RegExp(/<a href="(.*?)" .*?><img class='lazy'.*?data-original='(.*?)' alt='(.*?)' .*\/><\/a>/, "g");
+        var array = [];
+        while (temp = reg.exec(resp.data)) {
+          obj = {
+            id: temp[1].split('/').pop(),
+            image: {
+              src: temp[2]
+            },
+            title: {
+              text: temp[3]
+            },
+          }
+          array.push(obj)
+        }
+
+        render(array);
       } else {
         $ui.alert({
           title: "无法找到主页",
@@ -85,27 +101,20 @@ function fetch(url) {
 }
 
 function render(dataList) {
-  var data = []
-  for (var idx in dataList) {
-    var item = dataList[idx]
-    let obj = {
-      id: item.id,
-      sum: {
-        text: item.img_num,
-      },
-      image: {
-        src: item.thumb_src
-      },
-      title: {
-        text: item.title
-      }
+  $("mainData").data = dataList;
+  $("mainData").data.map((arr, index) => {
+    $http.request({
+    method: "GET",
+    url: arr.image.src,
+    header: {
+      Referer: host,
+    },
+    handler: function(resp) {
+      $("mainData").data[index].image.src = resp.data;
     }
-    if (item.thumb_src === undefined) {
-      obj.image.src = item.thumb_src_min
-    }
-    data.push(obj);
-  }
-  $("mainData").data = data;
+  });
+  })
+  
   $("mainData").endRefreshing();
 }
 
