@@ -52,10 +52,10 @@ function scriptVersionUpdate() {
   });
 }
 
-// const hot_url = "http://adr.meizitu.net/wp-json/wp/v2/hot";
 const host = "https://www.mzitu.com";
 const hot_url = host + "/hot";
-const post_url = "http://adr.meizitu.net/wp-json/wp/v2/posts?per_page=40";
+// const hot_url = "http://adr.meizitu.net/wp-json/wp/v2/hot";
+// const post_url = "http://adr.meizitu.net/wp-json/wp/v2/posts?per_page=40";
 
 function fetch(url) {
   $ui.loading("图片下载中");
@@ -94,105 +94,160 @@ function fetch(url) {
 }
 
 async function render(dataList) {
-  let reqs = dataList.map(arr => $http.download({
+  $("mainData").data = dataList;
+  let reqs = dataList.map((arr) => $http.download({
     url: arr.image.src,
     header: {
       "Referer": host
     }
   }))
   let resps = await Promise.all(reqs)
-  let newArray = dataList.map((arr, idx) => {
+  $("mainData").data = dataList.map((arr, idx) => {
     return {...arr, image: resps[idx]}
   })
-  $("mainData").data = newArray;
-  $("mainData").endRefreshing();
 }
 
-function viewHotDetail(id, title) {
-  $http.get({
-    url: "http://adr.meizitu.net/wp-json/wp/v2/i?id=" + id,
-    handler: function(resp) {
-      $ui.push({
-        props: {
-          title: title.text
-        },
-        views: [{
-          type: "matrix",
-          props: {
-            id: "detailView",
-            columns: 2,
-            spacing: 10,
-            selectable: true,
-            waterfall: true,
-            square: false,
-            alpha: 0,
-            template: [
-              { 
-                type: "image", 
-                props: { 
-                  id: "image", 
-                  smoothRadius:10,
-                }, 
-                layout: $layout.fill
-              }, 
-            ]
-          },
-          layout: function(make) { 
-            make.left.bottom.right.equalTo(0) 
-            make.top.equalTo(0) 
-          },
-          events: {
-            itemSize: (sender, indexPath) => {
-              const sizes = [$size(550, 850),$size(1000, 665), $size(1024, 689),$size(640, 427),]
-              return sizes[indexPath.item % 4]
-            },
-            didSelect: function(sender, indexPath, object) {
-              $ui.push({
-                props: { 
-                  title: "第" + (indexPath.item + 1) + "张"
-                }, 
-                views: [{ 
-                  type: "image", 
-                  props: {
-                    src: object.image.src,
-                    scale:0.8
-                  }, 
-                  layout: function(make, view) {
-                    make.left.right.inset(0)
-                    make.bottom.inset(0);
-                    make.height.equalTo(view.super)
-                    make.width.equalTo(view.super)
-                  },
-                  events: {
-                    tapped: function(sender) { 
-                      $http.download({ 
-                        url: object.image.src, 
-                        handler: function(resp) { 
-                          $share.universal(resp.data) 
-                          $ui.toast("下载成功！", 1)
-                        } 
-                      }) 
-                    } 
-                  } 
-                }] 
-              }) 
-             }, 
-          }
-        }]
-      })
+async function viewHotDetail(id, title) {
 
-      var urls = resp.data.content.split(',');
-      $("detailView").data = urls.map(url => { 
-        $ui.animate({
-            duration: .4,
-            animation: ()=> {
-                $("detailView").alpha = 1
-            }
-        });
-        return { image: { src: url } }
-      })
-    }
+  const detail_url = host + '/' + id;
+  $ui.push({
+    props: {
+      title: title.text
+    },
+    views: [{
+      type: "web",
+      props: {
+        url: detail_url
+      },
+      layout: $layout.fill
+    }]
+  });
+  return ;
+
+  
+  let resp = await $http.get(detail_url)
+  $ui.push({
+    props: {
+      title: title.text
+    },
+    views: [{
+      type: "matrix",
+      props: {
+        id: "detailView",
+        columns: 2,
+        spacing: 10,
+        selectable: true,
+        waterfall: true,
+        square: false,
+        alpha: 0,
+        template: [
+          { 
+            type: "image", 
+            props: { 
+              id: "image", 
+              smoothRadius:10,
+            }, 
+            layout: $layout.fill
+          }, 
+        ]
+      },
+      layout: function(make) { 
+        make.left.bottom.right.equalTo(0) 
+        make.top.equalTo(0) 
+      },
+      events: {
+        itemSize: (sender, indexPath) => {
+          const sizes = [$size(550, 850),$size(1000, 665), $size(1024, 689),$size(640, 427),]
+          return sizes[indexPath.item % 4]
+        },
+        didSelect: function(sender, indexPath, object) {
+          $ui.push({
+            props: { 
+              title: "第" + (indexPath.item + 1) + "张"
+            }, 
+            views: [{ 
+              type: "image", 
+              props: {
+                src: object.image.src,
+                scale:0.8
+              }, 
+              layout: function(make, view) {
+                make.left.right.inset(0)
+                make.bottom.inset(0);
+                make.height.equalTo(view.super)
+                make.width.equalTo(view.super)
+              },
+              events: {
+                tapped: function(sender) { 
+                  $http.download({ 
+                    url: object.image.src, 
+                    handler: function(resp) { 
+                      $share.universal(resp.data) 
+                      $ui.toast("下载成功！", 1)
+                    } 
+                  }) 
+                } 
+              } 
+            }] 
+          }) 
+         }, 
+      }
+    }]
   })
+
+  urls = [];
+
+  const main_reg = new RegExp(/<a href=".*?" ><img src="(.*?)" alt=".*" width="(.*?)" height="(.*?)" \/><\/a>/, "g");
+  var main = main_reg.exec(resp.data);
+  urls.push({
+    url: main[1],
+    width: main[2],
+    height: main[3],
+  })
+
+  const page_reg = new RegExp(/<span>([1-9]\d*|0.*?)<\/span>/, "g");
+  max = 1;
+  while (page = page_reg.exec(resp.data)) {
+    if (page[1] > max) {
+      max = page[1]
+    }
+  }
+
+  request_url = [];
+  for(i=2;i<max;i++) {
+    request_url.push(detail_url + '/' + i);
+  }
+  let reqs = request_url.map(arr => $http.get({
+    url: arr,
+    header: {
+      "Referer": host
+    }
+  }))
+  let resps = await Promise.all(reqs)
+
+  for(j=0;j<=request_url.length;j++) {
+    console.log(resps[j].data)
+    match = /<a href=".*?" ><img src="(.*?)" alt=".*" width="(.*?)" height="(.*?)" \/><\/a>/i.exec(resps[j].data);
+    console.log(match);
+    urls.push({
+      url: match[1],
+      width: match[2],
+      height: match[3],
+    })
+  }
+  console.log(urls);
+
+  $("detailView").data = urls.map(url => { 
+    $ui.animate({
+        duration: .4,
+        animation: ()=> {
+            $("detailView").alpha = 1
+        }
+    });
+    return { image: { src: url.url } }
+  })
+
+  console.log($("detailView").data)
 }
 
 const template = {
@@ -274,7 +329,7 @@ $ui.render({
       type: "tab",
       props: {
         id: 'menu',
-        items: ["最热", "最新"],
+        items: ["最新", "最热"],
         index: 0,
       },
       layout: function(make) {
@@ -284,9 +339,9 @@ $ui.render({
       events: {
         changed: function(sender) {
           if (sender.index === 0) {
-            fetch(hot_url);
+            fetch(host);
           } else {
-            fetch(post_url);
+            fetch(hot_url);
           }
         }
       }
@@ -301,15 +356,6 @@ $ui.render({
       events: {
         didSelect: function(tableView, indexPath) {
           viewHotDetail(tableView.object(indexPath).id, tableView.object(indexPath).title)
-        },
-        pulled: function(sender) {
-          // console.log(sender)
-          var index = $('menu').index;
-          if (index === 0) {
-            fetch(hot_url);
-          } else {
-            fetch(post_url);
-          }
         }
       },
       layout: function(make, view) {
@@ -397,4 +443,4 @@ function notify() {
   hintView.invoke("show")
  }
 
-fetch(hot_url);
+fetch(host);
