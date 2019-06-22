@@ -1,5 +1,5 @@
 
-const version = "0.1.1";
+const version = "0.1.2";
 // $addin.current.version=version;
 
 //检测扩展更新
@@ -58,6 +58,7 @@ const hot_url = host + "/hot";
 const post_url = "http://adr.meizitu.net/wp-json/wp/v2/posts?per_page=40";
 
 function fetch(url) {
+  $ui.loading("图片下载中");
   timeout = 5
   $http.request({
     timeout: timeout,
@@ -79,7 +80,9 @@ function fetch(url) {
           array.push(obj)
         }
 
-        render(array);
+        render(array).then(() => {
+          $ui.loading(false);
+        });
       } else {
         $ui.alert({
           title: "无法找到主页",
@@ -90,28 +93,17 @@ function fetch(url) {
   })
 }
 
-function render(dataList) {
-
-  var newArray = dataList.map(arr => {
-  //   // let resp = await $http.get({
-  //   //   url: arr.image.src,
-  //   //   header: {
-  //   //     "Referer": host
-  //   //   }
-  //   // });
-  //   // arr.image.data = $data(resp.data);
-
-    $http.download({
-      url: arr.image.src,
-      header: {
-        "Referer": host
-      }
-    }).then(resp => {
-      arr.image = $data(resp.data);
-    });
-    console.log(arr)
-    return arr
-  });
+async function render(dataList) {
+  let reqs = dataList.map(arr => $http.download({
+    url: arr.image.src,
+    header: {
+      "Referer": host
+    }
+  }))
+  let resps = await Promise.all(reqs)
+  let newArray = dataList.map((arr, idx) => {
+    return {...arr, image: resps[idx]}
+  })
   $("mainData").data = newArray;
   $("mainData").endRefreshing();
 }
