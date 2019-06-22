@@ -1,14 +1,4 @@
 
-/*
-  mzitu X JSBox
-  声明:
-  1. 脚本含成人内容，未满十八岁禁止运行
-  2. 脚本所有内容来自 https://www.mzitu.com 与脚本作者无任何关系
-  3. 脚本制作纯属技术交流，无任何商业利益或传播淫秽目的
-  By orqzsf1
-  @contact https://t.me/wlpwwwww
-*/
-
 const version = "0.1.1";
 // $addin.current.version=version;
 
@@ -101,20 +91,28 @@ function fetch(url) {
 }
 
 function render(dataList) {
-  $("mainData").data = dataList;
-  $("mainData").data.map((arr, index) => {
-    $http.request({
-    method: "GET",
-    url: arr.image.src,
-    header: {
-      Referer: host,
-    },
-    handler: function(resp) {
-      $("mainData").data[index].image.src = resp.data;
-    }
+
+  var newArray = dataList.map(arr => {
+  //   // let resp = await $http.get({
+  //   //   url: arr.image.src,
+  //   //   header: {
+  //   //     "Referer": host
+  //   //   }
+  //   // });
+  //   // arr.image.data = $data(resp.data);
+
+    $http.download({
+      url: arr.image.src,
+      header: {
+        "Referer": host
+      }
+    }).then(resp => {
+      arr.image = $data(resp.data);
+    });
+    console.log(arr)
+    return arr
   });
-  })
-  
+  $("mainData").data = newArray;
   $("mainData").endRefreshing();
 }
 
