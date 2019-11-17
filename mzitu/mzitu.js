@@ -1,6 +1,7 @@
 
 const current_version = "0.1";
 const author = "YJluang";
+const title = "mzitu";
 
 //检测扩展更新
 function scriptVersionUpdate() {
@@ -16,7 +17,7 @@ function scriptVersionUpdate() {
           handler: resp => {
             let box = resp.data;
             $addin.save({
-              name: "妹子图",
+              name: "mzitu",
               data: box,
               version: resp.data.version,
               author: author,
@@ -289,7 +290,7 @@ const template = {
 
 $ui.render({
   props: {
-    title: "妹子图",
+    title: "mzitu",
     list: [],
     navButtons: [
       {
