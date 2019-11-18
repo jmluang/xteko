@@ -1,5 +1,4 @@
 // image with header denmo
-const host = "https://www.mzitu.com";
 function fetch() {
   let array = [
     {
