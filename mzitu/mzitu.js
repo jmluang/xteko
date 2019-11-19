@@ -1,16 +1,15 @@
 
-const version = "0.1.2";
-// $addin.current.version=version;
+const current_version = "0.1";
+const author = "YJluang";
+const title = "mzitu";
 
 //检测扩展更新
 function scriptVersionUpdate() {
   $http.get({
-    url:
-      "https://raw.githubusercontent.com/jmluang/xteko/master/mzitu/updateInfo",
+    url: "https://raw.githubusercontent.com/jmluang/xteko/master/mzitu/updateInfo",
     handler: function(resp) {
-      var afterVersion = resp.data.version;
       var msg = resp.data.msg;
-      if (afterVersion > version) {
+      if (current_version < resp.data.version) {
         $ui.toast("检测到脚本更新,下载中...");
         $http.download({
           url:
@@ -18,10 +17,10 @@ function scriptVersionUpdate() {
           handler: resp => {
             let box = resp.data;
             $addin.save({
-              name: $addin.current.name,
+              name: "mzitu",
               data: box,
-              version: afterVersion,
-              author: "orqzsf1",
+              version: resp.data.version,
+              author: author,
               icon: "icon_014",
               handler: success => {
                 if (success) {
@@ -48,17 +47,18 @@ function scriptVersionUpdate() {
           }
         });
       }
+
+      $ui.alert({
+        title: "已经是最新版本了！"
+      });
     }
   });
 }
 
 const host = "https://www.mzitu.com";
 const hot_url = host + "/hot";
-// const hot_url = "http://adr.meizitu.net/wp-json/wp/v2/hot";
-// const post_url = "http://adr.meizitu.net/wp-json/wp/v2/posts?per_page=40";
 
 function fetch(url) {
-  $ui.loading("图片下载中");
   timeout = 5
   $http.request({
     timeout: timeout,
@@ -71,7 +71,12 @@ function fetch(url) {
           obj = {
             id: temp[1].split('/').pop(),
             image: {
-              src: temp[2]
+              source: {
+                url: temp[2],
+                header: {
+                  "referer": host
+                }
+              }
             },
             title: {
               text: temp[3]
@@ -80,9 +85,7 @@ function fetch(url) {
           array.push(obj)
         }
 
-        render(array).then(() => {
-          $ui.loading(false);
-        });
+        $("mainData").data = array;
       } else {
         $ui.alert({
           title: "无法找到主页",
@@ -93,6 +96,7 @@ function fetch(url) {
   })
 }
 
+// v 1.55.0 之后不用了，因为可以加 header 了
 async function render(dataList) {
   $("mainData").data = dataList;
   let reqs = dataList.map((arr) => $http.download({
@@ -124,7 +128,6 @@ async function viewHotDetail(id, title) {
   });
   return ;
 
-  
   let resp = await $http.get(detail_url)
   $ui.push({
     props: {
@@ -257,14 +260,14 @@ const template = {
     bgcolor: $color("white"),
     radius: 7,
   },
-  views: [{
+  views: [
+    {
       type: "image",
       props: {
         id: 'image',
         align: $align.center,
       },
       layout: function(make, view) {
-        make.top.inset(30)
         make.left.right.inset(10)
         make.height.equalTo(view.super)
       }
@@ -274,11 +277,11 @@ const template = {
         id: "title",
         bgcolor: $color("white"),
         font: $font(24),
-        lines: 3,
-        alpha: 0.7,
+        lines: 0,
+        alpha: 0.5,
       },
       layout: function(make, view) {
-        make.top.inset(30)
+        make.top.inset(0)
         make.left.right.inset(10)
       }
     }
@@ -287,7 +290,7 @@ const template = {
 
 $ui.render({
   props: {
-    title: "妹子图",
+    title: "mzitu",
     list: [],
     navButtons: [
       {
@@ -300,7 +303,8 @@ $ui.render({
               "领门店红包",
               "微信赞赏",
               "联系作者",
-              "作者声明"
+              "作者声明",
+              "检查更新"
             ],
             handler: function(title, idx) {
               switch (idx) {
@@ -313,10 +317,12 @@ $ui.render({
                   wechatPay()
                   break;
                 case 2:
-                  $app.openURL("https://t.me/wlpwwwww")
+                  $app.openURL("https://t.me/"+author)
                   break;
                 case 3:
                   notify();
+                case 4:
+                  scriptVersionUpdate()
               }
             }
           })
@@ -329,7 +335,7 @@ $ui.render({
       type: "tab",
       props: {
         id: 'menu',
-        items: ["最新", "最热"],
+        items: ["最热", "最新"],
         index: 0,
       },
       layout: function(make) {
@@ -339,9 +345,9 @@ $ui.render({
       events: {
         changed: function(sender) {
           if (sender.index === 0) {
-            fetch(host);
-          } else {
             fetch(hot_url);
+          } else {
+            fetch(host);
           }
         }
       }
@@ -443,4 +449,4 @@ function notify() {
   hintView.invoke("show")
  }
 
-fetch(host);
+fetch(hot_url);
