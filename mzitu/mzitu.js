@@ -1,5 +1,5 @@
 
-const current_version = "0.1";
+const current_version = "0.2";
 const author = "YJluang";
 const title = "mzitu";
 
@@ -144,19 +144,19 @@ async function viewHotDetail(id, title) {
         square: false,
         alpha: 0,
         template: [
-          { 
-            type: "image", 
-            props: { 
-              id: "image", 
+          {
+            type: "image",
+            props: {
+              id: "image",
               smoothRadius:10,
-            }, 
+            },
             layout: $layout.fill
-          }, 
+          },
         ]
       },
-      layout: function(make) { 
-        make.left.bottom.right.equalTo(0) 
-        make.top.equalTo(0) 
+      layout: function(make) {
+        make.left.bottom.right.equalTo(0)
+        make.top.equalTo(0)
       },
       events: {
         itemSize: (sender, indexPath) => {
@@ -165,15 +165,15 @@ async function viewHotDetail(id, title) {
         },
         didSelect: function(sender, indexPath, object) {
           $ui.push({
-            props: { 
+            props: {
               title: "第" + (indexPath.item + 1) + "张"
-            }, 
-            views: [{ 
-              type: "image", 
+            },
+            views: [{
+              type: "image",
               props: {
                 src: object.image.src,
                 scale:0.8
-              }, 
+              },
               layout: function(make, view) {
                 make.left.right.inset(0)
                 make.bottom.inset(0);
@@ -181,19 +181,19 @@ async function viewHotDetail(id, title) {
                 make.width.equalTo(view.super)
               },
               events: {
-                tapped: function(sender) { 
-                  $http.download({ 
-                    url: object.image.src, 
-                    handler: function(resp) { 
-                      $share.universal(resp.data) 
+                tapped: function(sender) {
+                  $http.download({
+                    url: object.image.src,
+                    handler: function(resp) {
+                      $share.universal(resp.data)
                       $ui.toast("下载成功！", 1)
-                    } 
-                  }) 
-                } 
-              } 
-            }] 
-          }) 
-         }, 
+                    }
+                  })
+                }
+              }
+            }]
+          })
+         },
       }
     }]
   })
@@ -240,7 +240,7 @@ async function viewHotDetail(id, title) {
   }
   console.log(urls);
 
-  $("detailView").data = urls.map(url => { 
+  $("detailView").data = urls.map(url => {
     $ui.animate({
         duration: .4,
         animation: ()=> {
@@ -262,27 +262,29 @@ const template = {
   },
   views: [
     {
+        type: "label",
+        props: {
+          id: "title",
+          bgcolor: $color("white"),
+          font: $font(24),
+          lines: 0,
+          alpha: 0.5,
+        },
+        layout: function(make, view) {
+          make.left.right.inset(5)
+          make.top.equalTo(8)
+        }
+    },
+    {
       type: "image",
       props: {
         id: 'image',
         align: $align.center,
       },
       layout: function(make, view) {
-        make.left.right.inset(10)
-        make.height.equalTo(view.super)
-      }
-    }, {
-      type: "label",
-      props: {
-        id: "title",
-        bgcolor: $color("white"),
-        font: $font(24),
-        lines: 0,
-        alpha: 0.5,
-      },
-      layout: function(make, view) {
-        make.top.inset(0)
-        make.left.right.inset(10)
+        make.top.equalTo(view.prev.bottom);
+        make.left.right.inset(5)
+        make.height.equalTo($("mainData").frame.height - (view.super.frame.height * 2) - $("menu").frame.height)
       }
     }
   ]
@@ -340,7 +342,7 @@ $ui.render({
       },
       layout: function(make) {
         make.left.top.right.equalTo(0)
-        make.height.equalTo(30)
+        make.height.equalTo(28)
       },
       events: {
         changed: function(sender) {
@@ -366,7 +368,7 @@ $ui.render({
       },
       layout: function(make, view) {
         make.left.bottom.right.equalTo(0)
-        make.top.equalTo($("menu").bottom).offset(0)
+        make.top.equalTo(view.prev.bottom);
       }
     }
   ]
@@ -417,34 +419,34 @@ function wechatPay() {
     ]
   });
  }
- 
+
 function notify() {
   var text = "声明\n\n1. 脚本含成人内容，未满十八岁禁止运行；\n2. 脚本所有内容来自 https://www.mzitu.com 与脚本作者无任何关系；\n3. 脚本制作纯属技术交流，无任何商业利益或传播淫秽目的。"
- 
+
   // Views
   var hintView = $objc("BaseHintView").invoke("alloc").invoke("initWithText", text)
   var textView = hintView.invoke("subviews").invoke("objectAtIndex", 1).invoke("subviews").invoke("objectAtIndex", 1)
- 
+
   // Attribute for text
   var string = $objc("NSMutableAttributedString").invoke("alloc").invoke("initWithString", text)
   string.invoke("addAttribute:value:range:", "NSFont", $font("bold", 26), $range(0, 2))
   string.invoke("setAlignment:range:", $align.center, $range(0, 2))
- 
+
   string.invoke("addAttribute:value:range:", "NSFont", textView.invoke("font"), $range(2, string.invoke("length") - 2))
   string.invoke("addAttribute:value:range:", "NSColor", $color("tint"), $range(text.indexOf("任何关系"), 2))
   string.invoke("addAttribute:value:range:", "NSColor", $color("red"), $range(text.indexOf("禁止运行"), 2))
   //string.invoke("addAttribute:value:range:", "NSColor", $color("tint"), $range(text.indexOf("无任何"), 2))
- 
+
   // Paragraph Style
   var para = $objc("NSMutableParagraphStyle").invoke("alloc.init")
   para.invoke("setParagraphSpacing", 10)
   para.invoke("setAlignment", $align.left)
- 
+
   string.invoke("addAttribute:value:range:", "NSParagraphStyle", para, $range(2, string.invoke("length") - 2))
- 
+
   // Setup
   textView.invoke("setAttributedText", string)
- 
+
   // Show View
   hintView.invoke("show")
  }
