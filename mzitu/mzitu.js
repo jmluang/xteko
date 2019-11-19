@@ -1,5 +1,5 @@
 
-const current_version = "0.2";
+const current_version = "0.3";
 const author = "YJluang";
 const title = "mzitu";
 
@@ -257,7 +257,6 @@ const template = {
   type: "view",
   props: {
     id: "contentView",
-    bgcolor: $color("white"),
     radius: 7,
   },
   views: [
@@ -266,13 +265,16 @@ const template = {
         props: {
           id: "title",
           bgcolor: $color("white"),
-          font: $font(24),
-          lines: 0,
+          font: $font(18),
+          textColor: $color("#ff88af"),
+          align: $align.left,
+          lines: 2,
           alpha: 0.5,
         },
         layout: function(make, view) {
           make.left.right.inset(5)
           make.top.equalTo(8)
+          make.height.equalTo(45)
         }
     },
     {
@@ -282,9 +284,9 @@ const template = {
         align: $align.center,
       },
       layout: function(make, view) {
-        make.top.equalTo(view.prev.bottom);
+        make.top.equalTo(view.prev.bottom)
+        make.bottom.equalTo(0)
         make.left.right.inset(5)
-        make.height.equalTo($("mainData").frame.height - (view.super.frame.height * 2) - $("menu").frame.height)
       }
     }
   ]
@@ -359,12 +361,20 @@ $ui.render({
       props: {
         id: 'mainData',
         template: template,
-        rowHeight: 500,
+        rowHeight: 560,
       },
       events: {
         didSelect: function(tableView, indexPath) {
           viewHotDetail(tableView.object(indexPath).id, tableView.object(indexPath).title)
-        }
+        },
+        // didLongPress: function(sender, indexPath, data) {
+        //   console.log(sender)
+        //   console.log(indexPath)
+        //   console.log(data)
+        //   $quicklook.open({
+        //     url: data.image.source.url
+        //   })
+        // }
       },
       layout: function(make, view) {
         make.left.bottom.right.equalTo(0)
